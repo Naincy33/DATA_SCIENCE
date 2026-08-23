@@ -1,55 +1,88 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 
-# 📂 Load dataset
-df = pd.read_csv("students.csv")
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
 
-# 👀 View data
-print("First 5 rows:\n", df.head())
+from sklearn.metrics import (
+    accuracy_score,
+    confusion_matrix,
+    precision_score,
+    recall_score,
+    f1_score
+)
 
-# ℹ️ Info about dataset
-print("\nInfo:\n")
-print(df.info())
+# -----------------------------
+# LOAD DATA
+# -----------------------------
 
-# 📊 Basic statistics
-print("\nStatistics:\n")
-print(df.describe())
+df = pd.read_csv("project_01/student.csv")
 
-# ➕ Create Total Marks column
-df["Total"] = df["Maths"] + df["Physics"] + df["Chemistry"]
+# -----------------------------
+# FEATURES & TARGET
+# -----------------------------
 
-# ➗ Create Average Marks column
-df["Average"] = df["Total"] / 3
+X = df[["Study_Hours", "Attendance"]]
+y = df["Result"]
 
-# 🏆 Find top performer
-top_student = df.sort_values(by="Total", ascending=False)
-print("\nTop Performer:\n", top_student.head(1))
+# -----------------------------
+# TRAIN TEST SPLIT
+# -----------------------------
 
-# 📊 Bar Chart: Total Marks
-plt.figure(figsize=(8,5))
-plt.bar(df["Name"], df["Total"])
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42,
+    stratify=y
+)
 
-plt.title("Total Marks of Students")
-plt.xlabel("Students")
-plt.ylabel("Marks")
+# -----------------------------
+# FEATURE SCALING
+# -----------------------------
 
-plt.xticks(rotation=45)
-plt.grid()
-plt.tight_layout()
-plt.show()
+scaler = StandardScaler()
 
-# 📈 Scatter Plot: Study Hours vs Marks
-plt.figure(figsize=(6,5))
-plt.scatter(df["Hours_Studied"], df["Total"])
+X_train_scaled = scaler.fit_transform(X_train)
+X_test_scaled = scaler.transform(X_test)
 
-plt.title("Study Hours vs Total Marks")
-plt.xlabel("Hours Studied")
-plt.ylabel("Total Marks")
+# -----------------------------
+# SVM MODEL
+# -----------------------------
 
-plt.grid()
-plt.tight_layout()
-plt.show()
+model = SVC(
+    kernel="rbf",
+    C=1,
+    gamma="scale"
+)
 
-# 🔍 High performers (Average > 80)
-high_perf = df[df["Average"] > 80]
-print("\nHigh Performers:\n", high_perf)
+# -----------------------------
+# TRAIN
+# -----------------------------
+
+model.fit(X_train_scaled, y_train)
+
+# -----------------------------
+# PREDICTION
+# -----------------------------
+
+y_pred = model.predict(X_test_scaled)
+
+# -----------------------------
+# EVALUATION
+# -----------------------------
+
+print("Accuracy:",
+      accuracy_score(y_test, y_pred))
+
+print("\nConfusion Matrix:")
+print(confusion_matrix(y_test, y_pred))
+
+print("\nPrecision:",
+      precision_score(y_test, y_pred, pos_label="Pass"))
+
+print("Recall:",
+      recall_score(y_test, y_pred, pos_label="Pass"))
+
+print("F1 Score:",
+      f1_score(y_test, y_pred, pos_label="Pass"))
